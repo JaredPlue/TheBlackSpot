@@ -39,6 +39,19 @@ public class MapGen : MonoBehaviour {
         textureData.ApplyToMaterial(terrainMaterial);
     }
 
+    public TerrainData popTerrainData
+    {
+        get
+        {
+            return terrainData;
+        }
+        private set { terrainData = value; }
+    }
+
+    public TerrainData getTerrainData()
+    {
+        return this.terrainData;
+    }
 
     public static int mapChunkSize
     {
@@ -60,7 +73,7 @@ public class MapGen : MonoBehaviour {
 
     public void DrawMapInEditor()
     {
-
+        textureData.UpdateMeshHeights(terrainMaterial, terrainData.minHeight, terrainData.maxHeight);
         MapData mapData = GenerateMapData(Vector2.zero);
 
         MapDisplay display = FindObjectOfType<MapDisplay>();
@@ -80,6 +93,7 @@ public class MapGen : MonoBehaviour {
 
     public void RequestMapData(Vector2 center, Action<MapData> callback)
     {
+        textureData.UpdateMeshHeights(terrainMaterial, terrainData.minHeight, terrainData.maxHeight);
         ThreadStart threadStart = delegate
         {
             MapDataThread(center, callback);
@@ -157,7 +171,6 @@ public class MapGen : MonoBehaviour {
                 }
             }
         }
-        textureData.UpdateMeshHeights(terrainMaterial, terrainData.minHeight, terrainData.maxHeight);
         return new MapData(noiseMap);
     }
 
@@ -202,4 +215,12 @@ public struct MapData
     {
         this.heightMap = heightMap;
     }
+
+    public float[,] GetHeightMap()
+    {
+        return heightMap;
+    }
 }
+
+
+

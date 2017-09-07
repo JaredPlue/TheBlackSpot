@@ -230,4 +230,5 @@ public class InfiniteTerrain : MonoBehaviour {
         public float visibleDist; //if viewer is not as close, we want lower lod
         public bool useForCollider;
     }
+
 }

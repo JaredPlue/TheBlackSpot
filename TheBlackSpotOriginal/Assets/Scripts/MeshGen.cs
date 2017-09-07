@@ -5,7 +5,7 @@ using UnityEngine;
 public static class MeshGen {
 
     public static MeshData GenTerrainMesh(float[,] heightMap, float heightMultiplier, AnimationCurve heightCurve, int levelOfDetail, bool useFlatShading) {
-        AnimationCurve tmpCurve = new AnimationCurve(heightCurve.keys); //each thread gets own heightcurve
+        AnimationCurve tmpCurve = new AnimationCurve(heightCurve.keys); //get keys of the heightcurve being used
 
         //increment number of triangles
         int meshIncrement = (levelOfDetail == 0)?1 : levelOfDetail * 2; //if 0 set to 1, else *2
@@ -14,6 +14,7 @@ public static class MeshGen {
         int borderedSize = heightMap.GetLength(0);
         int meshSize = borderedSize - 2 * meshIncrement;
         int meshSizeUnsimplified = borderedSize - 2;
+        
         //negatives are border, and wont be included
         /* * * * * * * * * *
          * -1  -2  -3 -4  -5  *
@@ -77,6 +78,127 @@ public static class MeshGen {
         }
         meshData.ProcessMesh();
         return meshData;
+    }
+
+    public class Populate : MonoBehaviour
+    {
+        public GameObject tree;
+        public MeshData meshData;
+        public float[,] heightMap;
+        private int number;
+        private int xaxis;
+        private int yaxis;
+        private float zaxis;
+        private Transform[] spawnLocations;
+        private GameObject[] treePrefab;
+        private GameObject[] treePrefabClone;
+
+        //get height stuffs
+        
+
+
+
+
+        void Start()
+        {
+
+            Debug.Log("place trees called");
+            waitTwoSeconds();
+            PlaceTrees();
+            Debug.Log("place trees called");
+        }
+
+        IEnumerator waitTwoSeconds()
+        {
+            yield return new WaitForSeconds(2);
+        }
+
+        void PlaceTrees()
+        {
+            Vector3[] posns;
+            posns = GeneratePositions(meshData); //generate 100 posns
+            shuffle(posns);
+            /***
+            for (int k = 0; k < 25; k++)
+            {
+                spawnLocations[k] = new Transform(posns[k], Quaternion.identity, 1.0);
+            }
+            */
+            for (int i = 0; i < 25; i++) //take the first 25 locations, make trees
+            {
+                Debug.Log("spawned tree");
+                Instantiate(treePrefab[i], posns[i], Quaternion.identity); //as GameObject
+            }
+        }
+
+        Vector3[] GeneratePositions(MeshData meshData)
+        {
+            Vector3[] posns = new Vector3[100];
+            int x = 0;
+            int y = 0;
+            int randz = 0;
+            float z = 0;
+            Vector3 tmpPosn = new Vector3(x, y, z);
+            int i = 0;
+            int maxHeight = 500;
+            //float[,] tmpheightmap = GetComponent<MapData>().GetHeightMap();
+
+            while (true)
+            {
+                x = UnityEngine.Random.Range(-MapGen.mapChunkSize, MapGen.mapChunkSize);  //gen rand x
+                y = UnityEngine.Random.Range(-MapGen.mapChunkSize, MapGen.mapChunkSize);  //gen rand y
+                randz = UnityEngine.Random.Range(15, 35); //gen num 15-35
+                z = randz / 100; //now num is .15-.35
+                                 //float height = tmpCurve.Evaluate(heightMap[x, y]) * heightMultiplier;
+                tmpPosn.Set(x, y, z);
+                RaycastHit hit;
+                Ray ray = new Ray(tmpPosn, Vector3.down);
+                if (GetComponent<Collider>().Raycast(ray, out hit, 2.0f * maxHeight))
+                {
+                    Debug.Log("Hit Point: " + hit.point);
+                }
+
+                tmpPosn.y = Terrain.activeTerrain.SampleHeight(tmpPosn) + Terrain.activeTerrain.GetPosition().y;
+                if (Terrain.activeTerrain.GetPosition().y < 0.35 && Terrain.activeTerrain.GetPosition().y > 0.15)
+                {
+                    posns[i] = new Vector3(x, y, Terrain.activeTerrain.GetPosition().y); //include it
+                    i++;
+                    Debug.Log("position added");
+                }
+                if (posns[i] == posns[posns.Length - 1])
+                {
+                    Debug.Log("array full");
+                    break; //if the array is full of okay posns
+                }
+            }
+            return posns; //now has 100 valid positions to spawn trees
+        }
+
+        Vector3[] shuffle(Vector3[] posns)
+        {
+            // Knuth shuffle algorithm :: courtesy of Wikipedia
+            for (int i = 0; i < posns.Length; i++)
+            {
+                Vector3 tmp = posns[i];
+                int r = UnityEngine.Random.Range(i, posns.Length);
+                posns[i] = posns[r];
+                posns[r] = tmp;
+            }
+            Debug.Log("shuffled");
+            return new Vector3[1];
+        }
+
+        bool canSpawn(int z)
+        {
+            float scale;
+            scale = GetComponent<MapGen>().terrainData.uniformScale;
+
+            if (z * scale < .15 * scale || z * scale > 0.35 * scale) //outside bounds
+            {
+                return false;
+            }
+            else return true; //within bounds
+        }
     }
 }
 
@@ -247,4 +369,6 @@ public static class MeshGen {
             return mesh;
         }
     }
+
+
 
